@@ -1,42 +1,43 @@
 import React from "react";
-import PageTemplate from "../components/templateMovieListPage";
-import { useQuery, useQueries } from "@tanstack/react-query";
-import { getTrendingMovies, getMovie } from "../api/tmdb-api";
-import Spinner from "../components/spinner";
+import { getTrendingMovies } from "../api/tmdb-api";
+import PageTemplate from '../components/templateMovieListPage';
+import { useQuery } from '@tanstack/react-query';
+import Spinner from '../components/spinner';
+import AddToFavoritesIcon from '../components/cardIcons/addToFavorites';
 
-const TrendingMoviesPage = () => {
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["trendingMoviesList"],
+
+const TrendingMoviesPage = (props) => {
+
+  const { data, error, isPending, isError } = useQuery({
+    queryKey: ['discover'],
     queryFn: getTrendingMovies,
-  });
+  })
 
-  if (isLoading) return <Spinner />;
-  if (isError) return <h1>{error.message}</h1>;
+  if (isPending) {
+    return <Spinner />
+  }
 
-  const trendingIds = (data.results || [])
-    .map((m) => m?.id)
-    .filter((id) => !!id);
+  if (isError) {
+    return <h1>{error.message}</h1>
+  }
 
-  const trendingMovieQueries = useQueries({
-    queries: trendingIds.map((id) => ({
-      queryKey: ["movie", { id }],
-      queryFn: getMovie,
-      enabled: !!id,
-    })),
-  });
+  const movies = data.results;
 
-  const isPending = trendingMovieQueries.find((q) => q.isLoading);
-  if (isPending) return <Spinner />;
+  // Redundant, but necessary to avoid app crashing.
+  const favorites = movies.filter(m => m.favorite)
+  localStorage.setItem('favorites', JSON.stringify(favorites))
+  const addToFavorites = (movieId) => true
 
-  const movies = trendingMovieQueries
-    .map((q) => {
-      if (!q.data) return null;
-      q.data.genre_ids = q.data.genres?.map((g) => g.id) || [];
-      return q.data;
-    })
-    .filter(Boolean);
-
-  return <PageTemplate title="Trending Movies" movies={movies} />;
+  return (
+    <PageTemplate
+      title="Discover Movies"
+      movies={movies}
+      action={(movie) => {
+        return <AddToFavoritesIcon movie={movie} />
+      }}
+    />
+  );
 };
+
 
 export default TrendingMoviesPage;

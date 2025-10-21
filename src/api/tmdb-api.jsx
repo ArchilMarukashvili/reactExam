@@ -54,11 +54,9 @@ export const getMovieReviews = ({ queryKey }) => {
   });
 };
 
-export const getTrendingMovies = ({ queryKey }) => {
-  const [, { id }] = queryKey;
-  if (!id) throw new Error("Invalid or missing movie ID");
+export const getTrendingMovies = () => {
   return fetch(
-    `https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_KEY}&language=en-US`
+    `https://api.themoviedb.org/3/trending/movie/week?api_key=${import.meta.env.VITE_TMDB_KEY}&language=en-US&include_adult=false&include_video=false&page=1`
   ).then(async (response) => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.status_message || "Something went wrong");
